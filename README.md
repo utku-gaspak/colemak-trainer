@@ -7,12 +7,16 @@ npm test         # engine unit tests
 npm run build    # typecheck + production bundle
 ```
 
-## Desktop apps (Windows, Linux)
+## Desktop apps (Windows, Linux, macOS)
 
 `electron/main.cjs` wraps the same build in an Electron window (no menu bar, so
 a lone Alt press can't steal focus from AltGr chords). Progress lives in
-localStorage under `%APPDATA%\Kegex` (Windows) or `~/.config/Kegex` (Linux),
-separate from the browser version.
+localStorage under `%APPDATA%\Kegex` (Windows), `~/.config/Kegex` (Linux) or
+`~/Library/Application Support/Kegex` (macOS), separate from the browser version.
+
+**Easiest:** let GitHub build all of them. Actions → *Desktop builds* → *Run
+workflow*, then download the files from the run's *Artifacts*. Pushing a tag
+(`git tag v0.2.0 && git push --tags`) also attaches them to a GitHub release.
 
 ### Windows
 
@@ -61,6 +65,33 @@ Electron's sandbox. The AppImage has two Ubuntu snags:
 - If it exits with a sandbox error on 24.04+, run it with `--no-sandbox`, or
   use the `.deb` instead.
 
+### macOS
+
+Only buildable on a Mac (or via the workflow above):
+
+```sh
+npm ci
+npm run build:mac
+```
+
+| File | Use |
+|---|---|
+| `Kegex-<version>-arm64.dmg` | Apple Silicon (M1 and later): open it, drag Kegex to Applications |
+| `Kegex-<version>-x64.dmg` | Intel Macs |
+| `Kegex-<version>-mac-<arch>.zip` | Same app, zipped instead of a disk image |
+
+The umlaut modifier is **Option** (⌥) on a Mac and the app labels it so; it is
+the same key event as AltGr. Cmd+Q / Cmd+W work as usual.
+
+The app is ad-hoc signed, not notarised (that needs a paid Apple Developer
+account), so macOS blocks the first launch. Either:
+
+- open it once, then System Settings → Privacy & Security → *Open Anyway*; or
+- run `xattr -dr com.apple.quarantine /Applications/Kegex.app`.
+
+A *"Kegex is damaged and can't be opened"* message means the same thing; the
+`xattr` command fixes it.
+
 ## Stack
 
 | Choice | Why |
@@ -69,12 +100,13 @@ Electron's sandbox. The AppImage has two Ubuntu snags:
 | **Zustand** (+ `persist`) | Selector subscriptions let each character re-render on its own: a keypress touches ~2 DOM nodes, not the whole line. Persistence to localStorage is built in. |
 | **Plain CSS with theme tokens** | No runtime styling cost; light/dark via `prefers-color-scheme`. |
 | **Vitest** | The engine is pure functions, so it's tested without a DOM. |
-| **Electron + electron-builder** | Windows exe and Linux AppImage / .deb from the same build; Chromium keeps `event.code` / AltGr behaviour identical to the browser. |
+| **Electron + electron-builder** | Windows exe, Linux AppImage / .deb and macOS dmg from the same build; Chromium keeps `event.code` / AltGr behaviour identical to the browser. |
 
 ## Layout
 
 ```
-electron/main.cjs               desktop shell: app:// origin, single window, no menu bar
+electron/main.cjs               desktop shell: app:// origin, single window, menu only on macOS
+.github/workflows/desktop.yml   builds the desktop apps on macOS / Windows / Ubuntu runners
 src/
   layout/colemakDh.ts           physical position → char / hand / finger / row; unlock order; umlauts
   input/keyMapping.ts           event.code → PhysicalKey (positional or firmware mode); AltGr chords
@@ -102,7 +134,7 @@ Settings has a scancode probe if you're unsure which applies.
 
 **Umlauts** `ä ö ü ß` are typed as a chord: AltGr + the key of the base letter (`a o u s`) by
 default, matching Colemak's and EURkey's AltGr layers. On Windows, AltGr arrives as Ctrl+Alt and is
-recognised as such. If your board sends them differently (e.g. a dedicated firmware key), rebind each
+recognised as such; on a Mac the key is Option. If your board sends them differently (e.g. a dedicated firmware key), rebind each
 one under Settings → Umlauts.
 
 ## Progression
