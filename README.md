@@ -7,11 +7,14 @@ npm test         # engine unit tests
 npm run build    # typecheck + production bundle
 ```
 
-## Windows app
+## Desktop apps (Windows, Linux)
 
 `electron/main.cjs` wraps the same build in an Electron window (no menu bar, so
 a lone Alt press can't steal focus from AltGr chords). Progress lives in
-localStorage under `%APPDATA%\Kegex`, separate from the browser version.
+localStorage under `%APPDATA%\Kegex` (Windows) or `~/.config/Kegex` (Linux),
+separate from the browser version.
+
+### Windows
 
 Build with Windows Node (PowerShell/cmd), not from WSL: the installer and
 portable targets need Wine on Linux.
@@ -36,6 +39,28 @@ warns on first launch (More info → Run anyway). The deprecation warnings
 `npm ci` prints (`inflight`, `glob`, `rimraf`, `boolean`) come from
 electron-builder's own dependencies, are build-time only, and are harmless.
 
+### Linux (Ubuntu)
+
+Builds on Linux or WSL, no extra tools needed:
+
+```sh
+npm ci
+npm run build:linux
+```
+
+| File | Use |
+|---|---|
+| `kegex_<version>_amd64.deb` | **Recommended on Ubuntu.** `sudo apt install ./release/kegex_<version>_amd64.deb`, then launch "Kegex" from the app menu or run `kegex`. Remove with `sudo apt remove kegex`. |
+| `Kegex-<version>-x86_64.AppImage` | Single file, no install: `chmod +x` it and run it. |
+
+The `.deb` installs an AppArmor profile, which Ubuntu 24.04+ needs for
+Electron's sandbox. The AppImage has two Ubuntu snags:
+
+- *"AppImages require FUSE to run"*: Ubuntu 22.04+ lacks FUSE 2, so run
+  `sudo apt install libfuse2t64` (`libfuse2` on 22.04).
+- If it exits with a sandbox error on 24.04+, run it with `--no-sandbox`, or
+  use the `.deb` instead.
+
 ## Stack
 
 | Choice | Why |
@@ -44,7 +69,7 @@ electron-builder's own dependencies, are build-time only, and are harmless.
 | **Zustand** (+ `persist`) | Selector subscriptions let each character re-render on its own: a keypress touches ~2 DOM nodes, not the whole line. Persistence to localStorage is built in. |
 | **Plain CSS with theme tokens** | No runtime styling cost; light/dark via `prefers-color-scheme`. |
 | **Vitest** | The engine is pure functions, so it's tested without a DOM. |
-| **Electron + electron-builder** | Windows exe from the same build; Chromium keeps `event.code` / AltGr behaviour identical to the browser. |
+| **Electron + electron-builder** | Windows exe and Linux AppImage / .deb from the same build; Chromium keeps `event.code` / AltGr behaviour identical to the browser. |
 
 ## Layout
 

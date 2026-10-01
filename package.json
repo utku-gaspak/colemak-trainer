@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc -b",
-    "build:win": "npm run build && electron-builder --win"
+    "build:win": "npm run build && electron-builder --win",
+    "build:linux": "npm run build && electron-builder --linux"
   },
   "dependencies": {
     "react": "^19.3.0",
@@ -64,9 +65,38 @@
     },
     "portable": {
       "artifactName": "${productName}-${version}-portable.${ext}"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Education",
+      "synopsis": "Colemak-DH touch-typing trainer for split keyboards",
+      "executableName": "kegex",
+      "maintainer": "u.gaspak <95883768+utku-gaspak@users.noreply.github.com>",
+      "syncDesktopName": true
+    },
+    "appImage": {
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "deb": {
+      "artifactName": "${name}_${version}_${arch}.${ext}"
     }
   },
   "allowScripts": {
     "electron-winstaller": false
-  }
+  },
+  "homepage": "https://github.com/utku-gaspak/colemak-trainer",
+  "desktopName": "kegex.desktop"
 }
