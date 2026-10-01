@@ -3,6 +3,7 @@ import { keyConfidence, keyErrorRate, MIN_SAMPLES, targetLatencyMs, type KeyStat
 import { ALL_KEYS, ALL_LEVEL_CHARS, EXTRA_CHARS, unlockedChars } from '../layout/colemakDh';
 import { useProfileStore, type LessonSummary } from '../state/profileStore';
 import { SplitKeyboard, type HeatCell } from './SplitKeyboard';
+import { ALT_GR } from '../input/keyMapping';
 
 type HeatMode = 'errors' | 'latency';
 
@@ -77,8 +78,8 @@ export function Dashboard() {
         </header>
         <SplitKeyboard unlocked={unlocked} heat={heat} />
         {[...EXTRA_CHARS.keys()].some((c) => unlocked.has(c) || heat[c]) && (
-          <div className="chord-heat" aria-label="AltGr characters">
-            <span className="muted">AltGr</span>
+          <div className="chord-heat" aria-label={`${ALT_GR} characters`}>
+            <span className="muted">{ALT_GR}</span>
             {[...EXTRA_CHARS.keys()].map((c) => {
               const h = heat[c];
               return (

@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { BASE_CHARS, MAX_LEVEL, UNLOCK_ORDER } from '../layout/colemakDh';
 import { useProfileStore } from '../state/profileStore';
+import { ALT_GR } from '../input/keyMapping';
 
 interface Feature {
   title: string;
@@ -58,7 +59,7 @@ export function AboutView() {
         },
         {
           title: 'Umlauts',
-          body: 'The last levels add ä ö ü ß, typed as AltGr + a / o / u / s by default (rebindable in Settings). From then on, German words join the word generator.',
+          body: `The last levels add ä ö ü ß, typed as ${ALT_GR} + a / o / u / s by default (rebindable in Settings). From then on, German words join the word generator.`,
         },
         {
           title: 'Promotion rules',

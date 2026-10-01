@@ -47,6 +47,10 @@ export interface Chord {
 
 export type ChordOverrides = Readonly<Partial<Record<string, Chord>>>;
 
+/** What the chord modifier is called on this platform: the same key event, Option on a Mac. */
+export const ALT_GR: string =
+  typeof navigator !== 'undefined' && /Mac/.test(navigator.platform || navigator.userAgent) ? 'Option' : 'AltGr';
+
 /** AltGr + the key that types the base letter under the current mapping. */
 export function defaultChord(char: string, mapping: CodeMapping): Chord | undefined {
   const extra = EXTRA_CHARS.get(char);
@@ -79,7 +83,7 @@ export function resolveChord(chordMap: ReadonlyMap<string, string>, chord: Chord
 export function describeChord(chord: Chord, mapping: CodeMapping): string {
   const key = resolvePhysicalKey(chord.code, mapping);
   const name = key ? (key.char === ' ' ? 'space' : key.char) : chord.code.replace(/^Key/, '');
-  return chord.altGr ? `AltGr + ${name}` : name;
+  return chord.altGr ? `${ALT_GR} + ${name}` : name;
 }
 
 export interface CharGuide {

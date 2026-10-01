@@ -62,10 +62,23 @@ app.whenReady().then(() => {
     return net.fetch(pathToFileURL(file).toString());
   });
 
-  // No menu bar: on Windows a lone Alt press would otherwise focus the menu
-  // and swallow the next keystroke, which breaks AltGr umlaut chords.
-  Menu.setApplicationMenu(null);
+  if (process.platform === 'darwin') {
+    // macOS menus live in the system bar, so Option never reaches them; the
+    // app menu is what makes Cmd+Q / Cmd+W / Cmd+H / Cmd+M work at all.
+    Menu.setApplicationMenu(
+      Menu.buildFromTemplate([{ role: 'appMenu' }, { role: 'editMenu' }, { role: 'windowMenu' }]),
+    );
+  } else {
+    // No menu bar: on Windows a lone Alt press would otherwise focus the menu
+    // and swallow the next keystroke, which breaks AltGr umlaut chords.
+    Menu.setApplicationMenu(null);
+  }
   createWindow();
+});
+
+// Dock click after the window was closed via the red button (if the app is still alive).
+app.on('activate', () => {
+  if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 
 app.on('window-all-closed', () => app.quit());

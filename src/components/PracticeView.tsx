@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHardwareKeyboard, type PhysicalPress } from '../input/useHardwareKeyboard';
-import { buildChordMap, chordLabels, guideFor } from '../input/keyMapping';
+import { ALT_GR, buildChordMap, chordLabels, guideFor } from '../input/keyMapping';
 import { fingerLabel } from '../layout/colemakDh';
 import { selectAllowed, selectFocus, selectWeakKeys, useProfileStore } from '../state/profileStore';
 import { useSessionStore } from '../state/sessionStore';
@@ -57,7 +57,7 @@ function KeyboardGuide({ showCodes }: { showCodes: boolean }) {
               Next: <kbd>{target === ' ' ? 'space' : target}</kbd>
               {guide.altGr ? (
                 <>
-                  {' '}= <kbd className="mod">AltGr</kbd> + <kbd>{guide.key?.char ?? guide.label.replace(/^AltGr \+ /, '')}</kbd>
+                  {' '}= <kbd className="mod">{ALT_GR}</kbd> + <kbd>{guide.key?.char ?? guide.label.replace(`${ALT_GR} + `, '')}</kbd>
                 </>
               ) : (
                 // Rebound to a key outside the layout (e.g. Quote): name it.

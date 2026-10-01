@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import { fingerLabel, halfRows, SPACE_KEY, type Finger, type Hand, type PhysicalKey } from '../layout/colemakDh';
+import { ALT_GR } from '../input/keyMapping';
 
 export interface HeatCell {
   /** 0..1 normalised intensity. */
@@ -57,7 +58,7 @@ const KeyCap = memo(function KeyCap({ k, isTarget, isWrong, locked, isFocus, hea
   return (
     <div className={classes.join(' ')} style={style} title={title} data-code={k.code}>
       <span className="key-char">{k.char === ' ' ? '␣' : k.char}</span>
-      {alt && !heatMode && <span className="key-alt" aria-label={`AltGr: ${alt}`}>{alt}</span>}
+      {alt && !heatMode && <span className="key-alt" aria-label={`${ALT_GR}: ${alt}`}>{alt}</span>}
       {heatMode ? (
         <span className="key-sub">{heat?.label ?? '–'}</span>
       ) : (
@@ -92,8 +93,8 @@ function Half({ hand, props }: { hand: Hand; props: SplitKeyboardProps }) {
       ))}
       <div className="key-row thumb-row">
         {hand === 'right' && !heatMode && (props.altGrActive || Object.keys(props.altLabels ?? {}).length > 0) && (
-          <div className={`key mod-key${props.altGrActive ? ' target' : ''}`} title="AltGr (right Alt)">
-            <span className="key-char">AltGr</span>
+          <div className={`key mod-key${props.altGrActive ? ' target' : ''}`} title={ALT_GR === 'AltGr' ? 'AltGr (right Alt)' : 'Option (⌥)'}>
+            <span className="key-char">{ALT_GR}</span>
           </div>
         )}
         {render(SPACE_KEY)}

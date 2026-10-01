@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useProfileStore } from '../state/profileStore';
 import { useSessionStore } from '../state/sessionStore';
 import {
+  ALT_GR,
   defaultChord,
   describeChord,
   effectiveChord,
@@ -20,7 +21,7 @@ import { THEME_IDS, THEMES, type Palette, type ThemeId } from '../themes/themes'
  */
 function chordProblem(char: string, chord: Chord, mapping: CodeMapping, overrides: ChordOverrides): string | undefined {
   if (!chord.altGr && resolvePhysicalKey(chord.code, mapping)) {
-    return `${describeChord(chord, mapping)} already types a letter. Hold AltGr, or use a key outside the layout.`;
+    return `${describeChord(chord, mapping)} already types a letter. Hold ${ALT_GR}, or use a key outside the layout.`;
   }
   for (const other of EXTRA_CHARS.keys()) {
     if (other === char) continue;
@@ -208,7 +209,7 @@ export function SettingsView() {
       <section className="card">
         <h2>Umlauts (levels {MAX_LEVEL - EXTRA_CHARS.size + 1}–{MAX_LEVEL})</h2>
         <p className="muted">
-          Typed as a chord, AltGr + the base letter by default, like Colemak's and EURkey's AltGr layers. If your board
+          Typed as a chord, {ALT_GR} + the base letter by default, like Colemak's and EURkey's AltGr layers. If your board
           types them differently (e.g. a dedicated firmware key), click Change and press it.
         </p>
         <ChordBindings mapping={settings.mapping} overrides={settings.chords} onChange={(chords) => update({ chords })} />
