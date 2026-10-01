@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolvePhysicalKey } from '../input/keyMapping';
+import { buildChordMap, describeChord, guideFor, resolveChord, resolvePhysicalKey } from '../input/keyMapping';
 
 describe('resolvePhysicalKey', () => {
   it('remaps QWERTY positions to Colemak-DH in positional mode', () => {
@@ -22,5 +22,34 @@ describe('resolvePhysicalKey', () => {
   it('ignores unmapped codes', () => {
     expect(resolvePhysicalKey('Digit1', 'positional')).toBeUndefined();
     expect(resolvePhysicalKey('Quote', 'firmware')).toBeUndefined();
+  });
+});
+
+describe('umlaut chords', () => {
+  it('defaults to AltGr + the physical key of the base letter', () => {
+    const pos = buildChordMap('positional', {});
+    expect(resolveChord(pos, { code: 'KeyA', altGr: true })).toBe('ä');
+    expect(resolveChord(pos, { code: 'Semicolon', altGr: true })).toBe('ö'); // o lives on Semicolon
+    expect(resolveChord(pos, { code: 'KeyI', altGr: true })).toBe('ü'); // u lives on KeyI
+    expect(resolveChord(pos, { code: 'KeyD', altGr: true })).toBe('ß'); // s lives on KeyD
+    expect(resolveChord(pos, { code: 'KeyA', altGr: false })).toBeUndefined();
+  });
+
+  it('uses the base letter code in firmware mode', () => {
+    const fw = buildChordMap('firmware', {});
+    expect(resolveChord(fw, { code: 'KeyO', altGr: true })).toBe('ö');
+    expect(resolveChord(fw, { code: 'KeyS', altGr: true })).toBe('ß');
+  });
+
+  it('honours rebinding, including unmodified keys outside the layout', () => {
+    const map = buildChordMap('positional', { 'ä': { code: 'Quote', altGr: false } });
+    expect(resolveChord(map, { code: 'Quote', altGr: false })).toBe('ä');
+    expect(resolveChord(map, { code: 'KeyA', altGr: true })).toBeUndefined();
+  });
+
+  it('describes chords by what the key types', () => {
+    expect(describeChord({ code: 'KeyI', altGr: true }, 'positional')).toBe('AltGr + u');
+    expect(guideFor('ö', 'positional', {})).toMatchObject({ altGr: true, label: 'AltGr + o', key: { code: 'Semicolon' } });
+    expect(guideFor('t', 'positional', {})).toMatchObject({ altGr: false, key: { code: 'KeyF' } });
   });
 });

@@ -4,7 +4,7 @@
  */
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import type { CodeMapping } from '../input/keyMapping';
+import type { ChordOverrides, CodeMapping } from '../input/keyMapping';
 import { isThemeId, type ThemeId } from '../themes/themes';
 import { focusChars, UNLOCK_ORDER, unlockedChars } from '../layout/colemakDh';
 import { applyKeystrokes, findWeakKeys, type Keystroke, type KeyStatsMap, type WeakKey } from '../engine/keyStats';
@@ -19,6 +19,8 @@ import {
 export interface Settings {
   theme: ThemeId;
   mapping: CodeMapping;
+  /** Per-character chord rebindings (umlauts); unset = AltGr + base letter. */
+  chords: ChordOverrides;
   targetWpm: number;
   lessonWords: number;
   weakBoost: number;
@@ -72,6 +74,7 @@ const LESSONS_LIMIT = 1000;
 export const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
   mapping: 'positional',
+  chords: {},
   targetWpm: 35,
   lessonWords: 15,
   weakBoost: 0.3,

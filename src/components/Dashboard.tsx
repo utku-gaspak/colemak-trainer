@@ -1,6 +1,6 @@
 import { useMemo, useState, type PointerEvent } from 'react';
 import { keyConfidence, keyErrorRate, MIN_SAMPLES, targetLatencyMs, type KeyStat } from '../engine/keyStats';
-import { ALL_KEYS, unlockedChars } from '../layout/colemakDh';
+import { ALL_KEYS, ALL_LEVEL_CHARS, EXTRA_CHARS, unlockedChars } from '../layout/colemakDh';
 import { useProfileStore, type LessonSummary } from '../state/profileStore';
 import { SplitKeyboard, type HeatCell } from './SplitKeyboard';
 
@@ -40,14 +40,14 @@ export function Dashboard() {
   const unlocked = useMemo(() => new Set(unlockedChars(unlockedCount)), [unlockedCount]);
   const heat = useMemo(() => {
     const out: Record<string, HeatCell | undefined> = {};
-    for (const k of ALL_KEYS) out[k.char] = heatFor(keyStats[k.char], mode);
+    for (const c of [...ALL_KEYS.map((k) => k.char), ...EXTRA_CHARS.keys()]) out[c] = heatFor(keyStats[c], mode);
     return out;
   }, [keyStats, mode]);
 
   const rows = useMemo(
     () =>
-      ALL_KEYS.filter((k) => keyStats[k.char])
-        .map((k) => ({ char: k.char, stat: keyStats[k.char]!, conf: keyConfidence(keyStats[k.char], targetWpm) }))
+      ALL_LEVEL_CHARS.filter((c) => keyStats[c])
+        .map((c) => ({ char: c, stat: keyStats[c]!, conf: keyConfidence(keyStats[c], targetWpm) }))
         .sort((a, b) => a.conf - b.conf),
     [keyStats, targetWpm],
   );
@@ -76,6 +76,25 @@ export function Dashboard() {
           </div>
         </header>
         <SplitKeyboard unlocked={unlocked} heat={heat} />
+        {[...EXTRA_CHARS.keys()].some((c) => unlocked.has(c) || heat[c]) && (
+          <div className="chord-heat" aria-label="AltGr characters">
+            <span className="muted">AltGr</span>
+            {[...EXTRA_CHARS.keys()].map((c) => {
+              const h = heat[c];
+              return (
+                <div
+                  key={c}
+                  className={`key heat ${h ? (h.value > 0.55 ? 'heat-strong' : 'heat-weak') : 'heat-empty'}${unlocked.has(c) ? '' : ' locked'}`}
+                  style={h ? { ['--heat' as string]: `${Math.round(h.value * 100)}%` } : undefined}
+                  title={h ? `${c}: ${h.detail}` : `${c}: no data yet`}
+                >
+                  <span className="key-char">{c}</span>
+                  <span className="key-sub">{h?.label ?? '–'}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
         <div className="heat-legend">
           <span>{mode === 'errors' ? '0%' : `${LATENCY_SCALE[0]} ms`}</span>
           <i className="heat-ramp" aria-hidden />

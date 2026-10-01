@@ -21,7 +21,7 @@ export interface MarkovModel {
 export function buildModel(words: readonly string[], order = 2): MarkovModel {
   const tables = Array.from({ length: order + 1 }, () => new Map<string, Map<string, number>>());
   for (const raw of words) {
-    const w = raw.toLowerCase().replace(/[^a-z]/g, '');
+    const w = raw.toLowerCase().replace(/[^a-zäöüß]/g, '');
     if (!w) continue;
     const padded = START.repeat(order) + w + END;
     for (let i = order; i < padded.length; i++) {

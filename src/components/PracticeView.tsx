@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHardwareKeyboard, type PhysicalPress } from '../input/useHardwareKeyboard';
-import { fingerLabel, KEY_BY_CHAR } from '../layout/colemakDh';
+import { buildChordMap, chordLabels, guideFor } from '../input/keyMapping';
+import { fingerLabel } from '../layout/colemakDh';
 import { selectAllowed, selectFocus, selectWeakKeys, useProfileStore } from '../state/profileStore';
 import { useSessionStore } from '../state/sessionStore';
 import { useShallow } from 'zustand/shallow';
@@ -30,24 +31,49 @@ function KeyboardGuide({ showCodes }: { showCodes: boolean }) {
   const wrong = useSessionStore((s) => s.session.lastWrong);
   const allowed = useProfileStore(useShallow(selectAllowed));
   const focus = useProfileStore(useShallow(selectFocus));
+  const mapping = useProfileStore((s) => s.settings.mapping);
+  const chords = useProfileStore((s) => s.settings.chords);
   const unlocked = useMemo(() => new Set(allowed), [allowed]);
   const focusSet = useMemo(() => new Set(focus), [focus]);
-  const targetKey = target === undefined ? undefined : KEY_BY_CHAR.get(target);
+  const altLabels = useMemo(() => chordLabels(allowed, mapping, chords), [allowed, mapping, chords]);
+  const guide = target === undefined ? undefined : guideFor(target, mapping, chords);
+  const wrongKey = wrong === null ? undefined : guideFor(wrong, mapping, chords)?.key;
 
   return (
     <section className="keyboard-panel" aria-label="Keyboard guide">
-      <SplitKeyboard target={target} wrong={wrong} unlocked={unlocked} focus={focusSet} showCodes={showCodes} />
+      <SplitKeyboard
+        target={guide?.key?.char}
+        wrong={wrongKey?.char}
+        unlocked={unlocked}
+        focus={focusSet}
+        showCodes={showCodes}
+        altLabels={altLabels}
+        altGrActive={guide?.altGr ?? false}
+      />
       <div className="keyboard-caption">
         <span className="finger-hint">
-          {targetKey ? (
+          {guide && target !== undefined ? (
             <>
-              Next: <kbd>{targetKey.char === ' ' ? 'space' : targetKey.char}</kbd> · {fingerLabel(targetKey)}
+              Next: <kbd>{target === ' ' ? 'space' : target}</kbd>
+              {guide.altGr ? (
+                <>
+                  {' '}= <kbd className="mod">AltGr</kbd> + <kbd>{guide.key?.char ?? guide.label.replace(/^AltGr \+ /, '')}</kbd>
+                </>
+              ) : (
+                // Rebound to a key outside the layout (e.g. Quote): name it.
+                !guide.key && (
+                  <>
+                    {' '}= <kbd>{guide.label}</kbd>
+                  </>
+                )
+              )}
+              {guide.key && <> · {fingerLabel(guide.key)}</>}
             </>
           ) : (
-            ' '
+            '\u00a0'
           )}
         </span>
-        <FingerLegend active={targetKey} />
+        <FingerLegend active={guide?.key} />
       </div>
     </section>
   );
@@ -65,6 +91,8 @@ function WeakKeysBadge() {
 
 export function PracticeView({ active }: { active: boolean }) {
   const mapping = useProfileStore((s) => s.settings.mapping);
+  const chordOverrides = useProfileStore((s) => s.settings.chords);
+  const chords = useMemo(() => buildChordMap(mapping, chordOverrides), [mapping, chordOverrides]);
   const showKeyboard = useProfileStore((s) => s.settings.showKeyboard);
   const type = useSessionStore((s) => s.type);
   const restartLesson = useSessionStore((s) => s.restartLesson);
@@ -73,9 +101,10 @@ export function PracticeView({ active }: { active: boolean }) {
   const focused = useWindowFocused();
   const [showCodes, setShowCodes] = useState(false);
 
-  const onPress = useCallback((p: PhysicalPress) => type(p.key.char, p.t), [type]);
+  const onPress = useCallback((p: PhysicalPress) => type(p.char, p.t), [type]);
   const onControl = useCallback((code: string) => code === 'Escape' && restartLesson(), [restartLesson]);
-  useHardwareKeyboard({ enabled: active, mapping, onPress, onControl });
+  useHardwareKeyboard({ enabled: active, mapping, chords, onPress, onControl });
+  const unlockGuide = justUnlocked ? guideFor(justUnlocked, mapping, chordOverrides) : undefined;
 
   useEffect(() => {
     if (!justUnlocked) return;
@@ -89,7 +118,13 @@ export function PracticeView({ active }: { active: boolean }) {
       <MetricsBar />
       {justUnlocked && (
         <div className="unlock-toast" role="status">
-          New key unlocked: <kbd>{justUnlocked}</kbd> · {fingerLabel(KEY_BY_CHAR.get(justUnlocked)!)}
+          New key unlocked: <kbd>{justUnlocked}</kbd>
+          {unlockGuide && (
+            <>
+              {' '}· {unlockGuide.altGr ? `${unlockGuide.label} · ` : ''}
+              {unlockGuide.key ? fingerLabel(unlockGuide.key) : ''}
+            </>
+          )}
         </div>
       )}
       <div className={`typing-shell${focused ? '' : ' blurred'}`}>

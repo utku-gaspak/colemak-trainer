@@ -119,7 +119,26 @@ export const UNLOCK_ORDER: readonly string[] = [
   'x', // bottom, below r
   'z', // bottom, below a
   'q', // top, above a
+  // Hardest levels: German characters, typed as a chord (AltGr + base letter by default).
+  'ä',
+  'ö',
+  'ü',
+  'ß',
 ];
+
+/**
+ * Characters with no key of their own. Each is typed as a chord; by default
+ * AltGr + the base letter's key, matching Colemak's and EURkey's AltGr layers.
+ */
+export const EXTRA_CHARS: ReadonlyMap<string, { base: string }> = new Map([
+  ['ä', { base: 'a' }],
+  ['ö', { base: 'o' }],
+  ['ü', { base: 'u' }],
+  ['ß', { base: 's' }],
+]);
+
+/** Every character the trainer can ask for, in level order. */
+export const ALL_LEVEL_CHARS: readonly string[] = [...BASE_CHARS, ...UNLOCK_ORDER];
 
 export const MAX_LEVEL = 1 + UNLOCK_ORDER.length;
 

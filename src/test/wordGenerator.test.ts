@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { BASE_CHARS, unlockedChars } from '../layout/colemakDh';
+import { BASE_CHARS, UNLOCK_ORDER, unlockedChars } from '../layout/colemakDh';
 import { createRng } from '../engine/rng';
 import { generateLesson } from '../engine/wordGenerator';
 
 describe('generateLesson', () => {
   it('uses only unlocked characters at every level', () => {
-    for (let n = 0; n <= 18; n++) {
+    for (let n = 0; n <= UNLOCK_ORDER.length; n++) {
       const allowed = unlockedChars(n);
       const words = generateLesson({ allowed, wordCount: 50, rng: createRng(n + 1) });
       const set = new Set(allowed);
@@ -40,5 +40,30 @@ describe('generateLesson', () => {
     const boosted = share(0.3);
     expect(boosted / base).toBeGreaterThan(1.15);
     expect(boosted / base).toBeLessThan(1.35);
+  });
+
+  it('never produces umlauts before they unlock, and uses them naturally after', () => {
+    const before = generateLesson({ allowed: unlockedChars(18), wordCount: 300, rng: createRng(5) }).join(' ');
+    expect(before).not.toMatch(/[äöüß]/);
+    const n = UNLOCK_ORDER.indexOf('ä') + 1;
+    const words = generateLesson({ allowed: unlockedChars(n), focus: ['ä'], wordCount: 300, rng: createRng(5) });
+    const withUmlaut = words.filter((w) => w.includes('ä'));
+    expect(withUmlaut.length / words.length).toBeGreaterThan(0.25);
+    // Learned from German contexts, so never word-initial gibberish like "äää".
+    expect(words.some((w) => /ää/.test(w))).toBe(false);
+  });
+
+  it('guarantees rare new keys a minimum share of words (no stalls on j / z / q)', () => {
+    for (const c of ['j', 'z', 'q', 'x', 'ß']) {
+      const n = UNLOCK_ORDER.indexOf(c) + 1;
+      const words = generateLesson({ allowed: unlockedChars(n), focus: [c], wordCount: 300, rng: createRng(n) });
+      expect(words.filter((w) => w.includes(c)).length / words.length, c).toBeGreaterThan(0.25);
+    }
+  });
+
+  it('can produce ß in natural positions', () => {
+    const words = generateLesson({ allowed: unlockedChars(UNLOCK_ORDER.length), focus: ['ß'], wordCount: 300, rng: createRng(9) });
+    expect(words.some((w) => w.includes('ß'))).toBe(true);
+    expect(words.some((w) => w.startsWith('ß'))).toBe(false);
   });
 });

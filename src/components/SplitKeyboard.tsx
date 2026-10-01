@@ -21,6 +21,10 @@ interface SplitKeyboardProps {
   focus?: ReadonlySet<string>;
   /** Show the QWERTY scancode under each key, useful for diagnosing firmware mapping. */
   showCodes?: boolean;
+  /** Secondary character per key char, shown in the corner (a → ä). */
+  altLabels?: Readonly<Record<string, string>>;
+  /** Target needs AltGr held: lights the AltGr indicator. */
+  altGrActive?: boolean;
 }
 
 export const FINGERS: readonly Finger[] = ['pinky', 'ring', 'middle', 'index', 'thumb'];
@@ -34,9 +38,10 @@ interface KeyCapProps {
   heat?: HeatCell;
   heatMode: boolean;
   showCodes: boolean;
+  alt?: string;
 }
 
-const KeyCap = memo(function KeyCap({ k, isTarget, isWrong, locked, isFocus, heat, heatMode, showCodes }: KeyCapProps) {
+const KeyCap = memo(function KeyCap({ k, isTarget, isWrong, locked, isFocus, heat, heatMode, showCodes, alt }: KeyCapProps) {
   const classes = ['key', `finger-${k.finger}`];
   if (k.homing) classes.push('homing');
   if (locked) classes.push('locked');
@@ -52,6 +57,7 @@ const KeyCap = memo(function KeyCap({ k, isTarget, isWrong, locked, isFocus, hea
   return (
     <div className={classes.join(' ')} style={style} title={title} data-code={k.code}>
       <span className="key-char">{k.char === ' ' ? '␣' : k.char}</span>
+      {alt && !heatMode && <span className="key-alt" aria-label={`AltGr: ${alt}`}>{alt}</span>}
       {heatMode ? (
         <span className="key-sub">{heat?.label ?? '–'}</span>
       ) : (
@@ -74,6 +80,7 @@ function Half({ hand, props }: { hand: Hand; props: SplitKeyboardProps }) {
       heat={props.heat?.[k.char]}
       heatMode={heatMode && k.char !== ' '}
       showCodes={props.showCodes ?? false}
+      alt={props.altLabels?.[k.char]}
     />
   );
   return (
@@ -83,7 +90,14 @@ function Half({ hand, props }: { hand: Hand; props: SplitKeyboardProps }) {
           {row.map(render)}
         </div>
       ))}
-      <div className="key-row thumb-row">{render(SPACE_KEY)}</div>
+      <div className="key-row thumb-row">
+        {hand === 'right' && !heatMode && (props.altGrActive || Object.keys(props.altLabels ?? {}).length > 0) && (
+          <div className={`key mod-key${props.altGrActive ? ' target' : ''}`} title="AltGr (right Alt)">
+            <span className="key-char">AltGr</span>
+          </div>
+        )}
+        {render(SPACE_KEY)}
+      </div>
     </div>
   );
 }

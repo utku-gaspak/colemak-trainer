@@ -191,6 +191,12 @@ kbd {
   transform: translateY(-2px);
 }
 .key.wrong { outline: 2px solid var(--bad); outline-offset: 1px; }
+.key-alt { position: absolute; top: 2px; right: 5px; font-size: 10px; color: var(--accent); }
+.key.mod-key { --finger: var(--f-thumb); font-family: var(--sans); }
+.key.mod-key .key-char { font-size: 11px; color: var(--muted); }
+.key.mod-key.target .key-char { color: var(--text); }
+.half-right .thumb-row { flex-direction: row-reverse; justify-content: flex-end; }
+kbd.mod { font-family: var(--sans); }
 .key-sub { font-size: 10px; line-height: 1; color: var(--muted); margin-top: 2px; }
 .key.target .key-sub { color: var(--text-2); }
 
@@ -214,6 +220,7 @@ kbd {
 .key.heat-strong .key-sub { color: var(--heat-ink-strong); opacity: 0.85; }
 .key.heat-weak { color: var(--text); }
 .key.heat-weak .key-sub { color: var(--text-2); }
+.chord-heat { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 10px; font-size: 12px; }
 .heat-legend { display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 12px; color: var(--text-2); margin-top: 14px; }
 .heat-ramp { width: 140px; height: 8px; border-radius: 4px; background: linear-gradient(to right, var(--heat-lo), var(--heat-hi)); }
 
@@ -260,6 +267,14 @@ kbd {
 .key-inline { display: inline-flex; flex-wrap: wrap; gap: 3px; vertical-align: middle; }
 
 /* ---------- settings ---------- */
+.chord-list { display: flex; flex-direction: column; gap: 8px; }
+.chord-row { display: flex; align-items: center; gap: 12px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--border); }
+.chord-row.capturing { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.chord-row button:not(.link) { padding: 3px 12px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface-2); }
+.chord-char { font-size: 1.1em; min-width: 2em; text-align: center; }
+.chord-desc { flex: 1; font-family: var(--mono); font-size: 13px; }
+.capture-hint { color: var(--accent); font-family: var(--sans); }
+.chord-error { color: var(--bad); font-size: 13px; margin: 4px 0 0; }
 .theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
 .theme-card {
   display: flex; flex-direction: column; gap: 6px; text-align: left;

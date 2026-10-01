@@ -57,6 +57,10 @@ export function AboutView() {
           ),
         },
         {
+          title: 'Umlauts',
+          body: 'The last levels add ä ö ü ß, typed as AltGr + a / o / u / s by default (rebindable in Settings). From then on, German words join the word generator.',
+        },
+        {
           title: 'Promotion rules',
           body: `Over the last ${p.windowWords} words at a level: accuracy ≥ ${pct(p.minAccuracy)}, rhythm stability ≥ ${pct(
             p.minStability,

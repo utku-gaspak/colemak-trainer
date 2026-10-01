@@ -4,24 +4,31 @@
  *
  * Two levers, deliberately separate:
  *  - Focus key (newest unlock): biased at the *character* level inside the
- *    Markov sampler, so it actually shows up even if English rarely uses it.
+ *    Markov sampler, plus a floor: whenever fewer than `focusShare` of the
+ *    line's words so far contain it, the next word must. Without the floor,
+ *    rare letters (j, z, q, ß) appear in ~1-5% of words and their level stalls.
  *  - Weak keys (measured, top 3): biased at the *word* level. Each slot draws a
  *    pool of candidates and picks one with weight 1 + weakBoost (default 0.3)
  *    if it contains a weak key, i.e. such words are ~30% more likely to be
  *    chosen than they would be naturally. Once a key's confidence recovers it
  *    drops out of the weak set and the boost stops.
  */
-import { CORPUS } from './corpus';
+import { CORPUS, GERMAN_CORPUS } from './corpus';
 import { buildModel, END, sampleNext, START, type MarkovModel } from './markov';
 import type { WeakKey } from './keyStats';
 import { createRng, weightedPick, type Rng } from './rng';
 
-let sharedModel: MarkovModel | undefined;
-function defaultModel(): MarkovModel {
-  return (sharedModel ??= buildModel(CORPUS, 2));
+let englishModel: MarkovModel | undefined;
+let germanModel: MarkovModel | undefined;
+const GERMAN_CHARS = ['ä', 'ö', 'ü', 'ß'];
+
+/** English-only until a German character is unlocked, then English + German. */
+function defaultModel(allowed: ReadonlySet<string>): MarkovModel {
+  if (GERMAN_CHARS.some((c) => allowed.has(c))) return (germanModel ??= buildModel([...CORPUS, ...GERMAN_CORPUS], 2));
+  return (englishModel ??= buildModel(CORPUS, 2));
 }
 
-const VOWELS = new Set(['a', 'e', 'i', 'o', 'u', 'y']);
+const VOWELS = new Set(['a', 'e', 'i', 'o', 'u', 'y', 'ä', 'ö', 'ü']);
 
 /** Real words a phonotactic model can stumble into that don't belong in drills. */
 const REJECT = new Set(['anal', 'anus', 'cock', 'crap', 'cum', 'cunt', 'dick', 'fag', 'fuck', 'homo', 'nazi', 'nigger', 'nigga', 'penis', 'piss', 'porn', 'rape', 'shit', 'slut', 'tits', 'twat', 'whore']);
@@ -39,6 +46,8 @@ export interface GeneratorOptions {
   maxLength?: number;
   /** Candidates drawn per word slot for weighted selection. */
   poolSize?: number;
+  /** Minimum fraction of words containing a focus key (when focus isn't the whole alphabet). */
+  focusShare?: number;
   rng?: Rng;
   model?: MarkovModel;
 }
@@ -107,7 +116,7 @@ export function generateLesson(opts: GeneratorOptions): string[] {
   const maxLength = opts.maxLength ?? Math.min(8, 4 + Math.floor(allowed.size / 6));
 
   const ctx: WordContext = {
-    model: opts.model ?? defaultModel(),
+    model: opts.model ?? defaultModel(allowed),
     allowed,
     // Only boost focus chars if focus isn't the whole alphabet (level 1).
     bias: focus.size > 0 && focus.size < allowed.size ? (ch) => (focus.has(ch) ? focusBoost : 1) : () => 1,
@@ -117,8 +126,21 @@ export function generateLesson(opts: GeneratorOptions): string[] {
   };
 
   const poolSize = opts.poolSize ?? 6;
+  const focusShare = focus.size > 0 && focus.size < allowed.size ? (opts.focusShare ?? 0.3) : 0;
+  const hasFocus = (w: string) => [...w].some((c) => focus.has(c));
+  // When a focus word is required, push harder on the focus letter mid-word.
+  const huntCtx: WordContext = { ...ctx, bias: (ch) => (focus.has(ch) ? focusBoost * 4 : 1) };
   const words: string[] = [];
+  let focusWords = 0;
   for (let i = 0; i < opts.wordCount; i++) {
+    if (focusWords < focusShare * (i + 1)) {
+      const w = findFocusWord(huntCtx, hasFocus, words[words.length - 1]);
+      if (w) {
+        words.push(w);
+        focusWords++;
+        continue;
+      }
+    }
     const pool: string[] = [];
     const weights: number[] = [];
     for (let j = 0; j < poolSize; j++) {
@@ -127,7 +149,18 @@ export function generateLesson(opts: GeneratorOptions): string[] {
       pool.push(w);
       weights.push([...w].some((c) => weak.has(c)) ? 1 + weakBoost : 1);
     }
-    words.push(weightedPick(pool, weights, rng) ?? generateWord(ctx));
+    const picked = weightedPick(pool, weights, rng) ?? generateWord(ctx);
+    words.push(picked);
+    if (hasFocus(picked)) focusWords++;
   }
   return words;
+}
+
+/** Draw until a word contains a focus key; undefined if the model can't produce one. */
+function findFocusWord(ctx: WordContext, hasFocus: (w: string) => boolean, previous: string | undefined): string | undefined {
+  for (let tries = 0; tries < 80; tries++) {
+    const w = generateWord(ctx);
+    if (hasFocus(w) && w !== previous) return w;
+  }
+  return undefined;
 }

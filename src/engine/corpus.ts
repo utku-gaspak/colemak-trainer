@@ -61,3 +61,32 @@ speech nature range steam motion path liquid log meant quotient teeth shell neck
 `
   .trim()
   .split(/\s+/);
+
+/**
+ * German training words, mixed in only once a German character is unlocked,
+ * so the earlier (English-shaped) levels are unaffected. Rich in ä ö ü ß so
+ * the model learns natural contexts for them (über, schön, straße, ...).
+ */
+export const GERMAN_CORPUS: readonly string[] = `
+und der die das ist nicht ein eine ich sie er wir ihr es mit auf aus bei nach von zu für über unter
+haben sein werden machen sagen gehen sehen kommen wissen geben stehen lassen finden bleiben liegen
+denken nehmen halten nennen zeigen stellen spielen arbeiten brauchen folgen lernen verstehen setzen
+bekommen beginnen erzählen versuchen schreiben laufen erklären sitzen ziehen scheinen fallen treffen
+suchen legen tragen schaffen lesen verlieren erkennen reden wohnen warten helfen gewinnen bieten
+zeit jahr mensch tag kind frau mann hand haus welt stadt land arbeit leben schule frage ende weg
+wasser nacht morgen abend woche stunde auge kopf freund familie mutter vater bruder schwester
+schön grün über für müssen können möchte würde wäre hätte später früh natürlich größe straße weiß
+heißen fuß süß müde tür bär käse mädchen äpfel männer häuser bäume vögel öl öffnen hören böse höhe
+löwe könig mögen dürfen fünf zurück glück brücke stück küche hütte mütze lücke übung führen fühlen
+prüfen spülen grüßen schließen gießen genießen draußen außen bloß groß gruß spaß fleißig mäßig
+ändern ärger ärztin älter ähnlich täglich nächste während später gefährlich erklären zählen wählen
+fähig jäger kälte länge märz nähe sägen träumen schätzen ähre
+öfter östlich ökonom öffentlich möglich höflich fröhlich größte schöner töne vögel löffel köpfe
+körper wörter dörfer völlig plötzlich nötig hölle mönch röte stören zögern
+übrig üblich übermorgen überall müll mühle mündlich nützlich glücklich prüfung tüte würfel
+düster dünn fühlen hügel küssen lügen rücken stürmen süden südlich türkis gemüse frühstück
+übersetzen üben schüler bücher hütte flüssig fünfzehn
+heißt weißt reißen beißen schoß maß straßen grüße füße süße größer außer fließen stoßen
+`
+  .trim()
+  .split(/\s+/);
