@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildChordMap, describeChord, guideFor, resolveChord, resolvePhysicalKey } from '../input/keyMapping';
+import { ALT_GR, buildChordMap, describeChord, guideFor, resolveChord, resolvePhysicalKey } from '../input/keyMapping';
 
 describe('resolvePhysicalKey', () => {
   it('remaps QWERTY positions to Colemak-DH in positional mode', () => {
@@ -48,8 +48,8 @@ describe('umlaut chords', () => {
   });
 
   it('describes chords by what the key types', () => {
-    expect(describeChord({ code: 'KeyI', altGr: true }, 'positional')).toBe('AltGr + u');
-    expect(guideFor('ö', 'positional', {})).toMatchObject({ altGr: true, label: 'AltGr + o', key: { code: 'Semicolon' } });
+    expect(describeChord({ code: 'KeyI', altGr: true }, 'positional')).toBe(`${ALT_GR} + u`);
+    expect(guideFor('ö', 'positional', {})).toMatchObject({ altGr: true, label: `${ALT_GR} + o`, key: { code: 'Semicolon' } });
     expect(guideFor('t', 'positional', {})).toMatchObject({ altGr: false, key: { code: 'KeyF' } });
   });
 });
