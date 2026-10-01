@@ -40,7 +40,7 @@ export interface UnlockEvent {
   words: number;
 }
 
-interface ProfileData {
+export interface ProfileData {
   unlockedCount: number;
   keyStats: KeyStatsMap;
   /** Words since the last unlock (capped), the promotion window source. */
@@ -57,8 +57,8 @@ interface ProfileActions {
   recordWord: (result: WordResult, strokes: readonly Keystroke[]) => string | undefined;
   recordLesson: (summary: Omit<LessonSummary, 'level'>) => void;
   updateSettings: (patch: Partial<Settings>) => void;
-  /** Manual skip, for users who already know a key. */
-  forceUnlock: () => string | undefined;
+  /** Jump to any level, forward or back. Key stats are kept. */
+  setLevel: (level: number) => void;
   resetProgress: () => void;
 }
 
@@ -98,6 +98,22 @@ function unlockNext(s: ProfileData, now: number): Partial<ProfileData> | undefin
   };
 }
 
+/**
+ * Move to `level` (1-based). Key stats and history are never touched: going
+ * back just re-locks keys, going forward unlocks them. The promotion window
+ * restarts because it measures performance at the current level only.
+ */
+export function levelChange(s: ProfileData, level: number, now: number): Partial<ProfileData> {
+  const count = Math.max(0, Math.min(UNLOCK_ORDER.length, Math.round(level) - 1));
+  const kept = s.unlocks.filter((u) => UNLOCK_ORDER.indexOf(u.char) < count);
+  const added = UNLOCK_ORDER.slice(s.unlockedCount, count).map((char, i) => ({
+    char,
+    at: now,
+    words: i === 0 ? s.wordsAtLevel : 0,
+  }));
+  return { unlockedCount: count, levelWords: [], wordsAtLevel: 0, unlocks: [...kept, ...added] };
+}
+
 export const useProfileStore = create<ProfileState>()(
   persist(
     (set, get) => ({
@@ -122,12 +138,10 @@ export const useProfileStore = create<ProfileState>()(
 
       updateSettings: (patch) => set((s) => ({ settings: { ...s.settings, ...patch } })),
 
-      forceUnlock: () => {
+      setLevel: (level) => {
         const s = get();
-        const unlock = unlockNext(s, Date.now());
-        if (!unlock) return undefined;
-        set(unlock);
-        return UNLOCK_ORDER[s.unlockedCount];
+        if (Math.round(level) - 1 === s.unlockedCount) return;
+        set(levelChange(s, level, Date.now()));
       },
 
       resetProgress: () => set((s) => ({ ...initialData(), settings: s.settings })),
@@ -136,7 +150,7 @@ export const useProfileStore = create<ProfileState>()(
       name: 'kegex.profile',
       version: 1,
       storage: createJSONStorage(() => localStorage),
-      partialize: ({ recordWord, recordLesson, updateSettings, forceUnlock, resetProgress, ...data }) => data,
+      partialize: ({ recordWord, recordLesson, updateSettings, setLevel, resetProgress, ...data }) => data,
       // Shallow merge drops newly added settings fields from old saves; merge settings deeply.
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<ProfileData>;

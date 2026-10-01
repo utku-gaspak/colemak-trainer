@@ -66,7 +66,10 @@ export function AboutView() {
           title: 'No stalling',
           body: `Weak old keys never block an unlock. After ${p.stallAfterWords} words at one level, the targets ease step by step.`,
         },
-        { title: 'Manual skip', body: '"unlock now" in the progress panel, for keys you already know.' },
+        {
+          title: 'Pick any level',
+          body: 'Click a key in the progress strip, or use ‹ ›, to jump to that level forward or back. Key stats are kept; only the current level\'s unlock progress restarts.',
+        },
       ],
     },
     {

@@ -1,6 +1,7 @@
-import { useMemo } from 'react';
+import { useMemo, type MouseEvent } from 'react';
 import { MAX_LEVEL, UNLOCK_ORDER, BASE_CHARS } from '../layout/colemakDh';
 import { selectPromotion, useProfileStore } from '../state/profileStore';
+import { useSessionStore } from '../state/sessionStore';
 import type { PromotionCheck } from '../engine/progression';
 
 function formatCheck(c: PromotionCheck): string {
@@ -21,7 +22,8 @@ export function ProgressPanel() {
   const wordsAtLevel = useProfileStore((s) => s.wordsAtLevel);
   const keyStats = useProfileStore((s) => s.keyStats);
   const settings = useProfileStore((s) => s.settings);
-  const forceUnlock = useProfileStore((s) => s.forceUnlock);
+  const setLevel = useProfileStore((s) => s.setLevel);
+  const nextLesson = useSessionStore((s) => s.nextLesson);
 
   const status = useMemo(
     () => selectPromotion({ unlockedCount, levelWords, wordsAtLevel, keyStats, settings }),
@@ -30,21 +32,45 @@ export function ProgressPanel() {
   const level = unlockedCount + 1;
   const next = UNLOCK_ORDER[unlockedCount];
 
+  // Swap in a fresh line right away so the new key set applies immediately.
+  const goTo = (target: number) => {
+    if (target < 1 || target > MAX_LEVEL || target === level) return;
+    setLevel(target);
+    nextLesson();
+  };
+  // Keep focus off buttons so typing is never swallowed by them.
+  const noFocus = (e: MouseEvent) => e.preventDefault();
+
   return (
     <section className="progress-panel">
       <div className="level">
+        <button type="button" className="level-step" onMouseDown={noFocus} onClick={() => goTo(level - 1)} disabled={level <= 1} aria-label="Previous level">
+          ‹
+        </button>
         <span className="level-num">Level {level}</span>
         <span className="muted">of {MAX_LEVEL}</span>
+        <button type="button" className="level-step" onMouseDown={noFocus} onClick={() => goTo(level + 1)} disabled={level >= MAX_LEVEL} aria-label="Next level">
+          ›
+        </button>
       </div>
 
-      <div className="key-strip" aria-label="Unlocked keys">
+      <div className="key-strip" aria-label="Keys by level — click one to jump to its level">
         {BASE_CHARS.map((c) => (
-          <kbd key={c} className="unlocked">{c}</kbd>
+          <button key={c} type="button" className="strip-key unlocked" onMouseDown={noFocus} onClick={() => goTo(1)} title="Level 1">
+            {c}
+          </button>
         ))}
         {UNLOCK_ORDER.map((c, i) => (
-          <kbd key={c} className={i < unlockedCount ? (i === unlockedCount - 1 ? 'unlocked newest' : 'unlocked') : 'locked'}>
+          <button
+            key={c}
+            type="button"
+            className={`strip-key ${i < unlockedCount ? (i === unlockedCount - 1 ? 'unlocked newest' : 'unlocked') : 'locked'}`}
+            onMouseDown={noFocus}
+            onClick={() => goTo(i + 2)}
+            title={`Level ${i + 2}${i + 2 === level ? ' (current)' : ''}`}
+          >
             {c}
-          </kbd>
+          </button>
         ))}
       </div>
 
@@ -71,7 +97,7 @@ export function ProgressPanel() {
               </li>
             ))}
           </ul>
-          <button type="button" className="link" onClick={forceUnlock} title="Skip ahead if you already know this key">
+          <button type="button" className="link" onMouseDown={noFocus} onClick={() => goTo(level + 1)} title="Skip ahead if you already know this key">
             unlock now
           </button>
         </div>
