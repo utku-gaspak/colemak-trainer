@@ -5,6 +5,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { CodeMapping } from '../input/keyMapping';
+import { isThemeId, type ThemeId } from '../themes/themes';
 import { focusChars, UNLOCK_ORDER, unlockedChars } from '../layout/colemakDh';
 import { applyKeystrokes, findWeakKeys, type Keystroke, type KeyStatsMap, type WeakKey } from '../engine/keyStats';
 import {
@@ -16,6 +17,7 @@ import {
 } from '../engine/progression';
 
 export interface Settings {
+  theme: ThemeId;
   mapping: CodeMapping;
   targetWpm: number;
   lessonWords: number;
@@ -68,6 +70,7 @@ const LEVEL_WORDS_LIMIT = 400;
 const LESSONS_LIMIT = 1000;
 
 export const DEFAULT_SETTINGS: Settings = {
+  theme: 'system',
   mapping: 'positional',
   targetWpm: 35,
   lessonWords: 15,
@@ -154,15 +157,14 @@ export const useProfileStore = create<ProfileState>()(
       // Shallow merge drops newly added settings fields from old saves; merge settings deeply.
       merge: (persisted, current) => {
         const p = (persisted ?? {}) as Partial<ProfileData>;
-        return {
-          ...current,
-          ...p,
-          settings: {
-            ...current.settings,
-            ...p.settings,
-            promotion: { ...current.settings.promotion, ...p.settings?.promotion },
-          },
+        const settings: Settings = {
+          ...current.settings,
+          ...p.settings,
+          promotion: { ...current.settings.promotion, ...p.settings?.promotion },
         };
+        // A theme removed in a later version falls back to system.
+        if (!isThemeId(settings.theme)) settings.theme = 'system';
+        return { ...current, ...p, settings };
       },
     },
   ),

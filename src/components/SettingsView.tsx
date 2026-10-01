@@ -1,7 +1,49 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useProfileStore } from '../state/profileStore';
 import { useSessionStore } from '../state/sessionStore';
 import type { CodeMapping } from '../input/keyMapping';
+import { THEME_IDS, THEMES, type Palette, type ThemeId } from '../themes/themes';
+
+/** Mini rendering of a theme in its own colours: typed / current / pending text + finger dots. */
+function ThemePreview({ p }: { p: Palette }) {
+  return (
+    <div className="theme-preview" style={{ background: p.surface, color: p.muted, border: `1px solid ${p.border}` }}>
+      <span>
+        <span style={{ color: p.ok }}>tar</span>
+        <span style={{ color: p.bad }}>s</span>
+        <span style={{ color: p.text, borderBottom: `2px solid ${p.accent}` }}>t</span>
+        <span> nei</span>
+      </span>
+      <span className="theme-dots">
+        {p.fingers.map((c, i) => (
+          <i key={i} style={{ background: c }} />
+        ))}
+      </span>
+    </div>
+  );
+}
+
+function ThemePicker({ value, onChange }: { value: ThemeId; onChange: (id: ThemeId) => void }) {
+  const card = (id: ThemeId, name: string, preview: ReactNode) => (
+    <button key={id} type="button" className={`theme-card${value === id ? ' on' : ''}`} onClick={() => onChange(id)} aria-pressed={value === id}>
+      {preview}
+      <span className="theme-name">{name}</span>
+    </button>
+  );
+  return (
+    <div className="theme-grid">
+      {card(
+        'system',
+        'System (light / dark)',
+        <div className="theme-split">
+          <div><ThemePreview p={THEMES.light} /></div>
+          <div><ThemePreview p={THEMES.dark} /></div>
+        </div>,
+      )}
+      {THEME_IDS.map((id) => card(id, THEMES[id].name, <ThemePreview p={THEMES[id]} />))}
+    </div>
+  );
+}
 
 /** Live scancode tester: shows exactly what the browser reports for each press. */
 function ScancodeProbe() {
@@ -32,6 +74,11 @@ export function SettingsView() {
 
   return (
     <div className="settings">
+      <section className="card">
+        <h2>Theme</h2>
+        <ThemePicker value={settings.theme} onChange={(theme) => update({ theme })} />
+      </section>
+
       <section className="card">
         <h2>Keyboard input</h2>
         <fieldset className="radio-group">

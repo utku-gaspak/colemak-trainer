@@ -1,13 +1,18 @@
-import { useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { AboutView } from './components/AboutView';
 import { Dashboard } from './components/Dashboard';
 import { PracticeView } from './components/PracticeView';
 import { SettingsView } from './components/SettingsView';
+import { useProfileStore } from './state/profileStore';
+import { applyTheme } from './themes/themes';
 
 type View = 'practice' | 'stats' | 'settings' | 'about';
 
 export function App() {
   const [view, setView] = useState<View>('practice');
+  const theme = useProfileStore((s) => s.settings.theme);
+  // Layout effect: paint the theme before the first frame, no flash.
+  useLayoutEffect(() => applyTheme(theme), [theme]);
   return (
     <div className="app">
       <header className="topbar">

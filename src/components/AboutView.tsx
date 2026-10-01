@@ -108,6 +108,10 @@ export function AboutView() {
         { title: 'Per-key heatmap', body: 'Error rate or latency for each key, drawn on the split layout.' },
         { title: 'History', body: 'WPM per line with accuracy and level on hover, plus a table of keys from weakest to strongest.' },
         { title: 'Confusions', body: 'Which keys you press by mistake for each target.' },
+        {
+          title: 'Themes',
+          body: 'System, Light, Dark, Catppuccin (Mocha, Macchiato, Frappé, Latte), Dracula, Nord, Gruvbox, Tokyo Night, One Dark, Solarized, Rosé Pine and Monokai. Pick one in Settings.',
+        },
         { title: 'Local only', body: 'Progress, stats and settings are saved in this browser (localStorage). Nothing is sent anywhere.' },
       ],
     },
