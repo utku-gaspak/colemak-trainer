@@ -7,6 +7,20 @@ npm test         # engine unit tests
 npm run build    # typecheck + production bundle
 ```
 
+## Windows app
+
+`electron/main.cjs` wraps the same build in an Electron window (no menu bar, so
+a lone Alt press can't steal focus from AltGr chords). Progress lives in
+localStorage under `%APPDATA%\Kegex`, separate from the browser version.
+
+```sh
+npm run build:win   # → release/Kegex-Setup-<version>.exe and release/Kegex-<version>-portable.exe
+```
+
+Run it with Windows Node (PowerShell/cmd), not from WSL: the installer and
+portable targets need Wine on Linux. Builds are unsigned, so SmartScreen warns
+on first launch (More info → Run anyway).
+
 ## Stack
 
 | Choice | Why |
