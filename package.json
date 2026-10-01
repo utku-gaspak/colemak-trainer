@@ -65,5 +65,8 @@
     "portable": {
       "artifactName": "${productName}-${version}-portable.${ext}"
     }
+  },
+  "allowScripts": {
+    "electron-winstaller": false
   }
 }
